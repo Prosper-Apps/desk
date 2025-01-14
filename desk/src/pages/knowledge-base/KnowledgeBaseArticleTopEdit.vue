@@ -9,30 +9,18 @@
     <div class="flex items-center gap-2 text-sm text-gray-600">
       <div class="text-gray-600">Created</div>
       <div class="text-gray-800">
-        {{ dayjs(creation).fromNow() }}
+        {{ dayjs.tz(creation).fromNow() }}
       </div>
       <div class="text-base text-gray-300">|</div>
       <div class="text-gray-600">Modified</div>
       <div class="text-gray-800">
-        {{ dayjs(modified).fromNow() }}
-      </div>
-      <div class="text-base text-gray-300">|</div>
-      <Icon icon="lucide:thumbs-up" class="h-4 w-4" />
-      <div class="text-gray-600">Likes</div>
-      <div class="text-gray-800">
-        {{ likes }}
-      </div>
-      <div class="text-base text-gray-300">|</div>
-      <Icon icon="lucide:thumbs-down" class="h-4 w-4" />
-      <div class="text-gray-600">Dislikes</div>
-      <div class="text-gray-800">
-        {{ dislikes }}
+        {{ dayjs.tz(modified).fromNow() }}
       </div>
     </div>
   </div>
   <div class="border-b pb-3">
     <FormControl
-      :placeholder="title"
+      :value="title"
       type="text"
       @change="emit('update:title', $event.target.value)"
     />
@@ -42,7 +30,6 @@
 <script setup lang="ts">
 import { Avatar, FormControl } from "frappe-ui";
 import { dayjs } from "@/dayjs";
-import { Icon } from "@iconify/vue";
 
 interface P {
   categoryName: string;
@@ -60,9 +47,6 @@ interface E {
   (event: "update:title", title: string): void;
 }
 
-withDefaults(defineProps<P>(), {
-  likes: 0,
-  dislikes: 0,
-});
+defineProps<P>();
 const emit = defineEmits<E>();
 </script>

@@ -4,13 +4,23 @@
     :options="options"
     :value="selection"
     @update:query="(q) => onUpdateQuery(q)"
-    @change="(v) => (selection = v)"
+    @change="
+      (v) => {
+        if (!resetInput) {
+          selection = v;
+        }
+        emit('change', v);
+      }
+    "
   />
 </template>
 
 <script setup lang="ts">
-import { Autocomplete, createListResource } from "frappe-ui";
+import { Autocomplete } from "@/components";
+import { createListResource } from "frappe-ui";
 import { computed, ref } from "vue";
+
+const emit = defineEmits(["change"]);
 
 const props = defineProps({
   value: {
@@ -40,7 +50,17 @@ const props = defineProps({
   pageLength: {
     type: Number,
     required: false,
-    default: 10,
+    default: 100,
+  },
+  resetInput: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  customFilters: {
+    type: Object,
+    required: false,
+    default: {},
   },
 });
 
@@ -49,6 +69,10 @@ const r = createListResource({
   pageLength: props.pageLength,
   auto: true,
   fields: [props.labelField, props.searchField, props.valueField],
+  filters: {
+    [props.searchField]: ["like", `%${props.value}%`],
+    ...props.customFilters,
+  },
   onSuccess: () => {
     selection.value = props.value
       ? options.value.find((o) => o.value === props.value)
@@ -68,6 +92,7 @@ function onUpdateQuery(query: string) {
   r.update({
     filters: {
       [props.searchField]: ["like", `%${query}%`],
+      ...props.customFilters,
     },
   });
 

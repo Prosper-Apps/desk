@@ -41,18 +41,37 @@
         :key="n.name"
         class="flex cursor-pointer items-start gap-3.5 px-5 py-2.5 hover:bg-gray-100"
         :to="getRoute(n)"
-        @click="() => notificationStore.toggle()"
+        @click="
+          () => {
+            notificationStore.toggle();
+            notificationStore.read(n.reference_ticket);
+          }
+        "
       >
-        <UserAvatar v-bind="n.user_from" />
+        <UserAvatar :name="n.user_from" />
         <span>
           <div class="mb-2 leading-5">
-            <component :is="getBody(n)" v-bind="n" />
+            <span class="space-x-1 text-gray-700">
+              <span class="font-medium text-gray-900">{{ n.user_from }}</span>
+              <span v-if="n.notification_type === 'Mention'"
+                >mentioned you in ticket</span
+              >
+              <span v-if="n.notification_type === 'Assignment'"
+                >assigned you a ticket</span
+              >
+              <span v-if="n.notification_type === 'Reaction'"
+                >has reopened the ticket</span
+              >
+              <span class="font-medium text-gray-900">{{
+                n.reference_ticket
+              }}</span>
+            </span>
           </div>
           <div class="flex items-center gap-2">
             <div class="text-sm text-gray-600">
-              {{ dayjs(n.creation).fromNow() }}
+              {{ dayjs.tz(n.creation).fromNow() }}
             </div>
-            <div v-if="!n.read" class="h-1.5 w-1.5 rounded-full bg-gray-900" />
+            <div v-if="!n.read" class="h-1.5 w-1.5 rounded-full bg-blue-400" />
           </div>
         </span>
       </RouterLink>
@@ -68,23 +87,21 @@ import { Notification } from "@/types";
 import { useSidebarStore } from "@/stores/sidebar";
 import { useNotificationStore } from "@/stores/notification";
 import { UserAvatar } from "@/components";
-import NotificationsMention from "./NotificationsMention.vue";
 
 const notificationStore = useNotificationStore();
 const sidebarStore = useSidebarStore();
 const target = ref(null);
-onClickOutside(target, () => {
-  if (notificationStore.visible) {
-    notificationStore.toggle();
+onClickOutside(
+  target,
+  () => {
+    if (notificationStore.visible) {
+      notificationStore.toggle();
+    }
+  },
+  {
+    ignore: ["#notifications-btn"],
   }
-});
-
-function getBody(n: Notification) {
-  switch (n.notification_type) {
-    case "Mention":
-      return NotificationsMention;
-  }
-}
+);
 
 function getRoute(n: Notification) {
   switch (n.notification_type) {
@@ -95,6 +112,14 @@ function getRoute(n: Notification) {
           ticketId: n.reference_ticket,
         },
         hash: "#" + n.reference_comment,
+      };
+    case "Assignment":
+    case "Reaction":
+      return {
+        name: "TicketAgent",
+        params: {
+          ticketId: n.reference_ticket,
+        },
       };
   }
 }
